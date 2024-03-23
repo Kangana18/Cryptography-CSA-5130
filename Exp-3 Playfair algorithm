@@ -1,0 +1,83 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#define MATRIX_SIZE 5
+void generateKeyMatrix(const char* key, char keyMatrix[MATRIX_SIZE][MATRIX_SIZE]) {
+    int i, j, k;
+    char alphabet[26] = "ABCDEFGHIKLMNOPQRSTUVWXYZ"; 
+    int keyLength = strlen(key);
+    k = 0;
+    for (i = 0; i < MATRIX_SIZE; i++) {
+        for (j = 0; j < MATRIX_SIZE; j++) {
+            if (k < keyLength) {
+                keyMatrix[i][j] = toupper(key[k]);
+                k++;
+            } else {
+                while (strchr(keyMatrix[0], alphabet[k]) != NULL) {
+                    k++;
+                }
+                keyMatrix[i][j] = alphabet[k];
+                k++;
+            }
+        }
+    }
+}
+void findPosition(char keyMatrix[MATRIX_SIZE][MATRIX_SIZE], char ch, int* row, int* col) {
+    int i, j;
+    for (i = 0; i < MATRIX_SIZE; i++) {
+        for (j = 0; j < MATRIX_SIZE; j++) {
+            if (keyMatrix[i][j] == ch) {
+                *row = i;
+                *col = j;
+                return;
+            }
+        }
+    }
+}
+
+void encryptPlayfair(char keyMatrix[MATRIX_SIZE][MATRIX_SIZE], const char* plaintext, char* ciphertext) {
+    int i, row1, col1, row2, col2;
+    char ch1, ch2;
+    for (i = 0; i < strlen(plaintext); i += 2) {
+        ch1 = toupper(plaintext[i]);
+        ch2 = toupper(plaintext[i + 1]);
+        if (!isalpha(ch1)) {
+            strcat(ciphertext, " ");
+            i--;
+            continue;
+        }
+        if (!isalpha(ch2)) {
+            ch2 = 'X';
+        }
+        findPosition(keyMatrix, ch1, &row1, &col1);
+        findPosition(keyMatrix, ch2, &row2, &col2);
+
+        if (row1 == row2) {
+            ciphertext[strlen(ciphertext)] = keyMatrix[row1][(col1 + 1) % MATRIX_SIZE];
+            ciphertext[strlen(ciphertext)] = keyMatrix[row2][(col2 + 1) % MATRIX_SIZE];
+        } else if (col1 == col2) {
+            ciphertext[strlen(ciphertext)] = keyMatrix[(row1 + 1) % MATRIX_SIZE][col1];
+            ciphertext[strlen(ciphertext)] = keyMatrix[(row2 + 1) % MATRIX_SIZE][col2];
+        } else {
+            ciphertext[strlen(ciphertext)] = keyMatrix[row1][col2];
+            ciphertext[strlen(ciphertext)] = keyMatrix[row2][col1];
+        }
+    }
+}
+int main() {
+    char key[100];
+    char plaintext[1000];
+    char keyMatrix[MATRIX_SIZE][MATRIX_SIZE];
+    char ciphertext[1000] = "";
+    printf("Enter the keyword (without 'J'): ");
+    fgets(key, sizeof(key), stdin);
+    printf("Enter the plaintext message: ");
+    fgets(plaintext, sizeof(plaintext), stdin);
+    key[strcspn(key, "\n")] = '\0';
+    plaintext[strcspn(plaintext, "\n")] = '\0';
+    generateKeyMatrix(key, keyMatrix);
+    encryptPlayfair(keyMatrix, plaintext, ciphertext);
+    printf("Encrypted message: %s\n", ciphertext);
+    return 0;
+}
