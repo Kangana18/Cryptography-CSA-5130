@@ -1,0 +1,45 @@
+def rc5_encrypt(key, data):
+    def left_rotate(val, r_bits, max_bits=32):
+        return (val << (r_bits % max_bits)) & (2 ** max_bits - 1) | \
+               ((val & (2 ** max_bits - 1)) >> (max_bits - (r_bits % max_bits)))
+
+    w = 32
+    r = 12
+    b = len(key)
+    key = key.ljust(b + (w // 8) - (b % (w // 8)), '\x00')
+    L = [key[i:i + (w // 8)] for i in range(0, len(key), w // 8)]
+    S = [(i + 1) * 0x9e3779b9 for i in range(2 * r + 2)]
+    A, B = int.from_bytes(data[:4], 'little'), int.from_bytes(data[4:], 'little')
+
+    for i in range(1, r + 1):
+        A = (left_rotate((A ^ B), B) + S[2 * i]) & 0xffffffff
+        B = (left_rotate((B ^ A), A) + S[2 * i + 1]) & 0xffffffff
+
+    return A.to_bytes(4, 'little') + B.to_bytes(4, 'little')
+
+def rc5_decrypt(key, data):
+    def right_rotate(val, r_bits, max_bits=32):
+        return ((val & (2 ** max_bits - 1)) >> (r_bits % max_bits)) | \
+               (val << (max_bits - (r_bits % max_bits)) & (2 ** max_bits - 1))
+
+    w = 32
+    r = 12
+    b = len(key)
+    key = key.ljust(b + (w // 8) - (b % (w // 8)), '\x00')
+    L = [key[i:i + (w // 8)] for i in range(0, len(key), w // 8)]
+    S = [(i + 1) * 0x9e3779b9 for i in range(2 * r + 2)]
+    A, B = int.from_bytes(data[:4], 'little'), int.from_bytes(data[4:], 'little')
+
+    for i in range(r, 0, -1):
+        B = right_rotate((B - S[2 * i + 1]) & 0xffffffff, A) ^ A
+        A = right_rotate((A - S[2 * i]) & 0xffffffff, B) ^ B
+
+    return A.to_bytes(4, 'little') + B.to_bytes(4, 'little')
+
+key = "SecretKey"
+plaintext = "Hello World"
+ciphertext = rc5_encrypt(key, plaintext.encode('utf-8'))
+decrypted_text = rc5_decrypt(key, ciphertext).decode('utf-8')
+print("Original Text:", plaintext)
+print("Encrypted Text:", ciphertext)
+print("Decrypted Text:", decrypted_text)
