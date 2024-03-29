@@ -1,0 +1,22 @@
+import hashlib
+import hmac
+
+def generate_mac(key, message):
+    # Convert the key and message to bytes
+    key_bytes = key.encode('utf-8')
+    message_bytes = message.encode('utf-8')
+
+    # Generate the MAC using MD5
+    mac = hmac.new(key_bytes, message_bytes, hashlib.md5)
+
+    # Return the hexadecimal representation of the MAC
+    return mac.hexdigest()
+
+# Example usage
+secret_key = "my_secret_key"
+data_to_sign = "Hello, this is the data to sign."
+
+mac = generate_mac(secret_key, data_to_sign)
+
+print(f"Data: {data_to_sign}")
+print(f"Generated MAC: {mac}")
